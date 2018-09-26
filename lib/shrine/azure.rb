@@ -4,14 +4,15 @@ require "azure/storage"
 class Shrine
   module Storage
     class Azure
-      attr_reader :client, :blobs, :container, :signer
+      attr_reader :client, :blobs, :container, :signer, :prefix
 
 
-      def initialize(storage_account_name, storage_access_key, container)
+      def initialize(storage_account_name, storage_access_key, container, prefix = '')
         @client = ::Azure::Storage::Client.create(storage_account_name: storage_account_name, storage_access_key: storage_access_key)
         @signer = ::Azure::Storage::Core::Auth::SharedAccessSignature.new(storage_account_name, storage_access_key)
         @blobs = @client.blob_client
         @container = container
+        @prefix = prefix
       end
 
       def upload(io, id, shrine_metadata: {}, **upload_options)
@@ -19,7 +20,7 @@ class Shrine
         begin
           filename =  shrine_metadata.filename
           options = { :content_type => shrine_metadata.mime_type,  content_disposition: 'attachment; filename=' + filename }
-          blobs.create_block_blob(container, id, io.to_io, options)
+          blobs.create_block_blob("#{container}#{prefix}", id, io.to_io, options)
         rescue Azure::Core::Http::HTTPError
           raise Shrine::Error
         end
@@ -69,7 +70,7 @@ class Shrine
       end
 
       def uri_for(key)
-        blobs.generate_uri("#{container}/#{key}")
+        blobs.generate_uri("#{container}#{prefix}/#{key}")
       end
 
     end
