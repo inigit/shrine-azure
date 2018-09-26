@@ -27,7 +27,7 @@ class Shrine
           end
           Rails.logger.info("[File]: #{file.inspect}")
           options = { :content_type => io.content_type,  content_disposition: 'attachment; filename=' + io.original_filename }
-          blobs.create_block_blob("#{container}#{prefix}", id, IO.binread(file), options)
+          blobs.create_block_blob(container + prefix, id, IO.binread(file), options)
         rescue Azure::Core::Http::HTTPError
           raise Shrine::Error
         end
