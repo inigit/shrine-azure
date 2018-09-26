@@ -17,8 +17,7 @@ class Shrine
 
       def upload(io, id, shrine_metadata: {}, **upload_options)
         # uploads `io` to the location `id`, can accept upload options
-        begin
-          # filename =  shrine_metadata.filename
+        begins
           if io.is_a?(UploadedFile)
             file = io.download
           elsif io.is_a?(Tempfile) || io.is_a?(File)
@@ -27,7 +26,7 @@ class Shrine
             file = io.tempfile
           end
           Rails.logger.info("[File]: #{file.inspect}")
-          options = { :content_type => shrine_metadata.mime_type,  content_disposition: 'attachment; filename=' + filename }
+          options = { :content_type => io.content_type,  content_disposition: 'attachment; filename=' + io.original_filenames }
           blobs.create_block_blob("#{container}#{prefix}", id, file, options)
         rescue Azure::Core::Http::HTTPError
           raise Shrine::Error
