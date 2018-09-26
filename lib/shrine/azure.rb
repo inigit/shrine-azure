@@ -17,7 +17,7 @@ class Shrine
 
       def upload(io, id, shrine_metadata: {}, **upload_options)
         # uploads `io` to the location `id`, can accept upload options
-        begins
+        begin
           if io.is_a?(UploadedFile)
             file = io.download
           elsif io.is_a?(Tempfile) || io.is_a?(File)
