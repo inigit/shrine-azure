@@ -62,7 +62,7 @@ class Shrine
             url = cdn_url + '/' + container + prefix + '/' + id
           end
         rescue Exception => e
-          url = orginal_url + prefix + '/' + id
+          url = orginal_url + '/' + id
         end
         url
         # generated_url = signer.signed_uri(
