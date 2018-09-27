@@ -21,13 +21,16 @@ class Shrine
         begin
           if io.is_a?(UploadedFile)
             file = io.download
+            options = { :content_type => io.content_type,  content_disposition: 'attachment; filename=' + io.original_filename }
           elsif io.is_a?(Tempfile) || io.is_a?(File)
             file = io
+            options = { :content_type => shrine_metadata['mime_type'],  content_disposition: 'attachment; filename=' + shrine_metadata['filename']}
           else
             file = io.tempfile
+            options = { :content_type => io.content_type,  content_disposition: 'attachment; filename=' + io.original_filename }
           end
+          
           Rails.logger.info("[File]: #{file.inspect}")
-          options = { :content_type => io.content_type,  content_disposition: 'attachment; filename=' + io.original_filename }
           if io.is_a?(UploadedFile)
             blobs.copy_blob(container + prefix, id, container, cache_prefix + '/' + io.data['id'] , options)
           else
@@ -69,7 +72,7 @@ class Shrine
       def delete(id)
         # deletes the file from the storage
         begin
-          blobs.delete_blob(container, id)
+          blobs.delete_blob(container + prefix, id)
         rescue Azure::Core::Http::HTTPError
           # Ignore files already deleted
         end
