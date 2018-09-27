@@ -90,7 +90,7 @@ class Shrine
         if cdn_url.blank?
           blobs.generate_uri("#{container}#{prefix}/#{key}")
         else 
-          cdn_url + '/' + container + prefix + '/' + io.data['id']
+          cdn_url + '/' + container + prefix + '/' + key
         end
       end
 
