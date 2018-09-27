@@ -52,10 +52,6 @@ class Shrine
 
       end
 
-      def download(id, download: nil, &block)
-
-      end
-
       def exists?(id)
         # returns whether the file exists on storage
         blob_for(key).present?
