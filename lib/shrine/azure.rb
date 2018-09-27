@@ -7,15 +7,15 @@ class Shrine
       attr_reader :client, :blobs, :container, :signer, :prefix, :cache_prefix, :cdn_url, :orginal_url
 
       # Cache prefix is using for copying from cache to store
-      def initialize(storage_account_name, storage_access_key, container, prefix = '', **options)
+      def initialize(storage_account_name, storage_access_key, container, prefix = '', cache_prefix = '', cdn_url = '', orginal_url = '')
         @client = ::Azure::Storage::Client.create(storage_account_name: storage_account_name, storage_access_key: storage_access_key)
         @signer = ::Azure::Storage::Core::Auth::SharedAccessSignature.new(storage_account_name, storage_access_key)
         @blobs = @client.blob_client
         @container = container
         @prefix = prefix
-        @cache_prefix = options['cache_prefix']
-        @cdn_url = options['cdn_url']
-        @orginal_url = options['orginal_url']
+        @cache_prefix = cache_prefix
+        @cdn_url = cdn_url
+        @orginal_url = orginal_url
       end
 
       def upload(io, id, shrine_metadata: {}, **upload_options)
