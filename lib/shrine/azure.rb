@@ -4,15 +4,16 @@ require "azure/storage"
 class Shrine
   module Storage
     class Azure
-      attr_reader :client, :blobs, :container, :signer, :prefix
+      attr_reader :client, :blobs, :container, :signer, :prefix, :cache_prefix
 
-
-      def initialize(storage_account_name, storage_access_key, container, prefix = '')
+      # Cache prefix is using for copying from cache to store
+      def initialize(storage_account_name, storage_access_key, container, prefix = '', cache_prefix = '')
         @client = ::Azure::Storage::Client.create(storage_account_name: storage_account_name, storage_access_key: storage_access_key)
         @signer = ::Azure::Storage::Core::Auth::SharedAccessSignature.new(storage_account_name, storage_access_key)
         @blobs = @client.blob_client
         @container = container
         @prefix = prefix
+        @cache_prefix = cache_prefix
       end
 
       def upload(io, id, shrine_metadata: {}, **upload_options)
@@ -27,10 +28,18 @@ class Shrine
           end
           Rails.logger.info("[File]: #{file.inspect}")
           options = { :content_type => io.content_type,  content_disposition: 'attachment; filename=' + io.original_filename }
-          blobs.create_block_blob(container + prefix, id, IO.binread(file), options)
+          if io.is_a?(UploadedFile)
+            blobs.copy_blob(container + prefix, id, container + cache_prefix, id , options)
+          else
+            blobs.create_block_blob(container + prefix, id, IO.binread(file), options)
+          end
         rescue Azure::Core::Http::HTTPError
           raise Shrine::Error
         end
+      end
+
+      def download(id, download: nil, &block)
+      
       end
 
       def open(id, expires_in = nil, **options)
