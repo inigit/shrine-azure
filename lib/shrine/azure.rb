@@ -4,17 +4,18 @@ require "azure/storage"
 class Shrine
   module Storage
     class Azure
-      attr_reader :client, :blobs, :container, :signer, :prefix, :cache_prefix, :cdn_url
+      attr_reader :client, :blobs, :container, :signer, :prefix, :cache_prefix, :cdn_url, :orginal_url
 
       # Cache prefix is using for copying from cache to store
-      def initialize(storage_account_name, storage_access_key, container, prefix = '', cache_prefix = '', cdn_url = '')
+      def initialize(storage_account_name, storage_access_key, container, prefix = '', **options)
         @client = ::Azure::Storage::Client.create(storage_account_name: storage_account_name, storage_access_key: storage_access_key)
         @signer = ::Azure::Storage::Core::Auth::SharedAccessSignature.new(storage_account_name, storage_access_key)
         @blobs = @client.blob_client
         @container = container
         @prefix = prefix
-        @cache_prefix = cache_prefix
-        @cdn_url = cdn_url
+        @cache_prefix = options['cache_prefix']
+        @cdn_url = options['cdn_url']
+        @orginal_url = options['orginal_url']
       end
 
       def upload(io, id, shrine_metadata: {}, **upload_options)
@@ -87,11 +88,18 @@ class Shrine
       end
 
       def uri_for(key)
-        if cdn_url.blank?
-          blobs.generate_uri("#{container}#{prefix}/#{key}")
-        else 
-          cdn_url + '/' + container + prefix + '/' + key
+        url = ''
+        begin
+          blobs.get_blob_metadata(container, prefix + '/' + key)
+          if cdn_url.blank?
+            url = blobs.generate_uri("#{container}#{prefix}/#{key}")
+          else 
+            url = cdn_url + '/' + container + prefix + '/' + key
+          end
+        rescue Azure::Core::Http::HTTPError
+          url = orginal_url + prefix + '/' + key
         end
+        url
       end
 
     end
