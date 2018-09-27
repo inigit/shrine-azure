@@ -29,7 +29,7 @@ class Shrine
           Rails.logger.info("[File]: #{file.inspect}")
           options = { :content_type => io.content_type,  content_disposition: 'attachment; filename=' + io.original_filename }
           if io.is_a?(UploadedFile)
-            blobs.copy_blob(container + prefix, id, container + cache_prefix, id , options)
+            blobs.copy_blob(container + prefix, id, container, cache_prefix + '/' + io.data['id'] , options)
           else
             blobs.create_block_blob(container + prefix, id, IO.binread(file), options)
           end
