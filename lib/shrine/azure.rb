@@ -4,16 +4,17 @@ require "azure/storage"
 class Shrine
   module Storage
     class Azure
-      attr_reader :client, :blobs, :container, :signer, :prefix, :cache_prefix
+      attr_reader :client, :blobs, :container, :signer, :prefix, :cache_prefix, :cdn_url
 
       # Cache prefix is using for copying from cache to store
-      def initialize(storage_account_name, storage_access_key, container, prefix = '', cache_prefix = '')
+      def initialize(storage_account_name, storage_access_key, container, prefix = '', cache_prefix = '', cdn_url = '')
         @client = ::Azure::Storage::Client.create(storage_account_name: storage_account_name, storage_access_key: storage_access_key)
         @signer = ::Azure::Storage::Core::Auth::SharedAccessSignature.new(storage_account_name, storage_access_key)
         @blobs = @client.blob_client
         @container = container
         @prefix = prefix
         @cache_prefix = cache_prefix
+        @cdn_url = cdn_url
       end
 
       def upload(io, id, shrine_metadata: {}, **upload_options)
@@ -51,16 +52,17 @@ class Shrine
 
       def url(id, expires_in = nil, **options)
         # options = { :content_type => io.metadata.mime_type,  content_disposition: 'attachment; filename=' + filename }
+        url = uri_for(id)
+        url
+        # generated_url = signer.signed_uri(
+        #     uri_for(id), false,
+        #     service: "b",
+        #     permissions: "r",
+        #     expiry: format_expiry(expires_in),
 
-        generated_url = signer.signed_uri(
-            uri_for(id), false,
-            service: "b",
-            permissions: "r",
-            expiry: format_expiry(expires_in),
+        # ).to_s
 
-        ).to_s
-
-        generated_url
+        # generated_url
 
       end
 
@@ -85,7 +87,11 @@ class Shrine
       end
 
       def uri_for(key)
-        blobs.generate_uri("#{container}#{prefix}/#{key}")
+        if cdn_url.blank?
+          blobs.generate_uri("#{container}#{prefix}/#{key}")
+        else 
+          cdn_url + '/' + container + prefix + '/' + io.data['id']
+        end
       end
 
     end
