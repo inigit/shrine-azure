@@ -53,7 +53,17 @@ class Shrine
 
       def url(id, expires_in = nil, **options)
         # options = { :content_type => io.metadata.mime_type,  content_disposition: 'attachment; filename=' + filename }
-        url = uri_for(id)
+        url = ''
+        begin
+          blobs.get_blob_metadata(container, prefix + '/' + key)
+          if cdn_url.blank?
+            url = blobs.generate_uri("#{container}#{prefix}/#{key}")
+          else 
+            url = cdn_url + '/' + container + prefix + '/' + key
+          end
+        rescue Exception => e
+          url = orginal_url + prefix + '/' + key
+        end
         url
         # generated_url = signer.signed_uri(
         #     uri_for(id), false,
@@ -64,7 +74,6 @@ class Shrine
         # ).to_s
 
         # generated_url
-
       end
 
       def exists?(id)
@@ -88,18 +97,7 @@ class Shrine
       end
 
       def uri_for(key)
-        url = ''
-        begin
-          blobs.get_blob_metadata(container, prefix + '/' + key)
-          if cdn_url.blank?
-            url = blobs.generate_uri("#{container}#{prefix}/#{key}")
-          else 
-            url = cdn_url + '/' + container + prefix + '/' + key
-          end
-        rescue Azure::Core::Http::HTTPError
-          url = orginal_url + prefix + '/' + key
-        end
-        url
+        blobs.generate_uri("#{container}#{prefix}/#{key}")
       end
 
     end
