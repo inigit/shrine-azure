@@ -54,17 +54,13 @@ class Shrine
       def url(id, expires_in = nil, **options)
         # options = { :content_type => io.metadata.mime_type,  content_disposition: 'attachment; filename=' + filename }
         url = ''
-        begin
-          blobs.get_blob_metadata(container, prefix + '/' + id)
-          if cdn_url.blank?
-            url = blobs.generate_uri("#{container}#{prefix}/#{id}")
-          else 
-            url = cdn_url + '/' + container + prefix + '/' + id
-          end
-        rescue Exception => e
-          url = orginal_url + '/' + id
+        
+        if cdn_url.blank?
+          url = blobs.generate_uri("#{container}#{prefix}/#{id}")
+        else 
+          url = cdn_url + '/' + container + prefix + '/' + id
         end
-        url
+        
         # generated_url = signer.signed_uri(
         #     uri_for(id), false,
         #     service: "b",
